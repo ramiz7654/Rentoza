@@ -81,8 +81,7 @@ router.get('/vehicles', h(async (req, res) => {
   if (status === 'live') f.approvalStatus = 'approved';
   else if (status === 'removed') f.approvalStatus = 'rejected';
   else if (status === 'available') { f.approvalStatus = 'approved'; f.available = true; }
-  if (number && number.trim()) f.vehicleNumber = new RegExp(esc(number.trim().replace(/\s+/g, '')), 'i');
-  if (q && q.trim()) f.name = new RegExp(esc(q.trim()), 'i');
+  if (number && number.trim()) { const n = number.replace(/[\s-]+/g, ''); if (n) f.vehicleNumber = new RegExp(n.split('').map(esc).join('[\\s-]*'), 'i'); }  if (q && q.trim()) f.name = new RegExp(esc(q.trim()), 'i');
   if (shop && shop.trim()) {
     const rx = new RegExp(esc(shop.trim()), 'i');
     f.rental = { $in: (await Rental.find({ $or: [{ shopName: rx }, { city: rx }] }).select('_id')).map((r) => r._id) };

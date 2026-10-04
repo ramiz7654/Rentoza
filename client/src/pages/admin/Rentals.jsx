@@ -24,10 +24,6 @@ export default function AdminRentals() {
         <span className="muted small">{list.length} of {all.length} rental(s)</span>
         {q && <button className="btn ghost sm" onClick={() => setQ('')}>Clear</button>}
       </div>
-      <div className="row" style={{ marginBottom: 12 }}>
-        <input style={{ maxWidth: 360 }} placeholder="Search shop, owner, mobile, city or state" value={q} onChange={(e) => setQ(e.target.value)} />
-        <span className="muted small">{list.length} of {all.length} rental(s)</span>
-      </div>
       <FilterChips options={['all', 'owner-pending', 'pending', 'approved', 'rejected']} value={filter} counts={(s) => all.filter((r) => match(r, s) && hit(r)).length}
         onPick={(s) => setSp(s === 'all' ? {} : { status: s }, { replace: true })} />
       {data && !list.length && <Empty>No rentals in this view.</Empty>}
