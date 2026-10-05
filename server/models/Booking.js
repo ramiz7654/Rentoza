@@ -8,10 +8,12 @@ const bookingSchema = new Schema({
   endDate: { type: Date, required: true },
   days: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'confirmed', 'rejected', 'cancelled', 'completed'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'confirmed', 'rejected', 'cancelled', 'completed', 'expired'], default: 'pending' },
   customerNote: { type: String, default: '', maxlength: 500 },
   ownerNote: { type: String, default: '', maxlength: 500 },
   rejectionReason: String,
+  originalEndDate: Date,                       // set the first time the customer extends
+  extendedDays: { type: Number, default: 0 }, // total extra days added by the customer
   reviewDismissed: { type: Boolean, default: false }, // customer removed the review popup for this ride
 }, { timestamps: true });
 

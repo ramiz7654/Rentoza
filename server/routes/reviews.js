@@ -13,6 +13,14 @@ router.post('/', protect, requireRole('customer'), h(async (req, res) => {
   res.status(201).json({ review });
 }));
 
+// Home page slider: latest good reviews with a written comment (only first name + initial is shown)
+router.get('/featured', h(async (req, res) => {
+  const rows = await Review.find({ status: 'visible', rating: { $gte: 4 }, comment: { $nin: ['', null] } }).sort('-createdAt').limit(12)
+    .populate('customer', 'name').populate('vehicle', 'name').populate('rental', 'shopName city').lean();
+  const who = (n = '') => { const [a, b] = n.trim().split(/\s+/); return a ? (b ? `${a} ${b[0].toUpperCase()}.` : a) : 'Customer'; };
+  res.json({ reviews: rows.map((r) => ({ _id: r._id, rating: r.rating, comment: r.comment, customer: who(r.customer?.name), vehicle: r.vehicle?.name, shop: r.rental?.shopName, city: r.rental?.city, createdAt: r.createdAt })) });
+}));
+
 router.get('/', h(async (req, res) => {
   if (!req.query.vehicle) bad('vehicle query is required');
   const reviews = await Review.find({ vehicle: req.query.vehicle, status: 'visible' }).sort('-createdAt').populate('customer', 'name');

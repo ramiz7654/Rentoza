@@ -5,8 +5,9 @@ const Rental = require('../models/Rental');
 const Review = require('../models/Review');
 const { protect, requireRole } = require('../middleware/auth');
 const { h, bad } = require('../utils/helpers');
+const { settleMiddleware, IST_DAY_END_MS } = require('../utils/settle');
 
-router.use(protect);
+router.use(protect, settleMiddleware);
 
 router.post('/', requireRole('customer'), h(async (req, res) => {
   const { vehicleId, startDate, endDate, customerNote } = req.body;
@@ -58,6 +59,36 @@ router.get('/:id', h(async (req, res) => {
   const allowed = role === 'admin' || (role === 'customer' && String(b.customer._id) === String(_id)) || (role === 'owner' && String(b.rental.owner) === String(_id));
   if (!allowed) bad('Booking not found', 404); // do not reveal other people's bookings
   b.reviewed = !!(await Review.exists({ booking: b._id }));
+  if (role === 'customer' && ['pending', 'confirmed'].includes(b.status)) {
+    // how far this booking can be extended: up to the start of the next booking of the same vehicle
+    const next = await Booking.findOne({ vehicle: b.vehicle._id, _id: { $ne: b._id }, status: { $in: ['pending', 'confirmed'] }, startDate: { $gte: b.endDate } }).sort('startDate').select('startDate').lean();
+    b.extendMaxDate = next ? next.startDate : null;
+    b.dailyRate = b.totalAmount / b.days;
+  }
+  res.json({ booking: b });
+}));
+
+// Customer extends his own booking (no owner approval). Only if no other booking of the vehicle clashes.
+router.patch('/:id/extend', requireRole('customer'), h(async (req, res) => {
+  const b = (await Booking.findOne({ _id: req.params.id, customer: req.user._id })) || bad('Booking not found', 404);
+  if (!['pending', 'confirmed'].includes(b.status)) bad(`A ${b.status} booking cannot be extended`);
+  if (Date.now() >= b.endDate.getTime() + IST_DAY_END_MS) bad('This booking has already ended. Please make a new booking.');
+  const newEnd = new Date(req.body.endDate);
+  if (isNaN(newEnd)) bad('A valid new end date is required');
+  const extra = Math.round((newEnd - b.endDate) / 86400000);
+  if (extra < 1) bad('New end date must be after the current end date');
+  if (extra > 30) bad('You can extend by at most 30 days at a time');
+  const vehicle = (await Vehicle.findById(b.vehicle)) || bad('Vehicle not found', 404);
+  if (vehicle.approvalStatus !== 'approved' || !vehicle.available) bad('This vehicle cannot be extended right now. Please contact the rental shop.');
+  const clash = await Booking.findOne({ vehicle: b.vehicle, _id: { $ne: b._id }, status: { $in: ['pending', 'confirmed'] }, startDate: { $lt: newEnd }, endDate: { $gt: b.endDate } }).sort('startDate').select('startDate');
+  if (clash) bad(`The vehicle is booked by someone else from ${clash.startDate.toISOString().slice(0, 10)}, so you can extend only up to that date.`, 409);
+  const rate = b.totalAmount / b.days; // keep the rate this booking was made at
+  if (!b.originalEndDate) b.originalEndDate = b.endDate;
+  b.endDate = newEnd;
+  b.days += extra;
+  b.extendedDays += extra;
+  b.totalAmount = Math.round(b.totalAmount + rate * extra);
+  await b.save();
   res.json({ booking: b });
 }));
 

@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const { h, bad, signToken, safeUser } = require('../utils/helpers');
+const { sendMail, resetEmail, configured } = require('../utils/mailer');
 
 const LABEL = { customer: 'Customer', owner: 'Rental Owner', admin: 'Admin' };
 
@@ -65,7 +66,10 @@ router.post('/forgot-password', h(async (req, res) => {
     user.passwordResetToken = crypto.createHash('sha256').update(raw).digest('hex');
     user.passwordResetExpires = Date.now() + 30 * 60 * 1000;
     await user.save();
-    console.log(`[DEV] Password reset link: ${process.env.CLIENT_URL}/forgot-password?token=${raw}`);
+    const link = `${process.env.CLIENT_URL}/forgot-password?token=${raw}`;
+    if (configured()) {
+      try { await sendMail({ to: user.email, ...resetEmail(link) }); } catch (e) { console.error('Reset email failed:', e.message); }
+    } else console.log(`[DEV] Password reset link: ${link}`); // no email service configured: link is shown in the server console
   }
   res.json({ message: 'If this email is registered, a reset link has been generated.' });
 }));

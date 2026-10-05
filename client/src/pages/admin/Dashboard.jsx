@@ -43,7 +43,7 @@ export default function AdminDashboard() {
           <section className="card"><h3>Bookings, last 6 months</h3><p className="muted small">Requests created each month</p>
             <Columns rows={data.months.map((m) => ({ label: m.label, value: m.bookings }))} /></section>
           <section className="card"><h3>Bookings by status</h3><p className="muted small">Tap a status on the Bookings page</p>
-            <Bars rows={['pending', 'confirmed', 'completed', 'rejected', 'cancelled'].map((k) => ({ label: k[0].toUpperCase() + k.slice(1), value: bs[k] || 0 }))} /></section>
+            <Bars rows={['pending', 'confirmed', 'completed', 'rejected', 'cancelled', 'expired'].map((k) => ({ label: k[0].toUpperCase() + k.slice(1), value: bs[k] || 0 }))} /></section>
           <section className="card"><h3>Vehicles by category</h3><p className="muted small">All vehicles on the platform</p>
             <Bars rows={Object.entries(data.vehiclesByCategory).map(([k, v]) => ({ label: catLabel(k), value: v }))} color="var(--teal)" /></section>
           <section className="card"><h3>Rentals and vehicles</h3><p className="muted small">Approved vs total</p>

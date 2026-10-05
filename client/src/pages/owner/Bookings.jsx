@@ -15,7 +15,7 @@ export default function OwnerBookings() {
       <Msg>{err}</Msg>
       {!!all.length && (
         <div className="chips" style={{ marginBottom: 12 }}>
-          {['all', 'pending', 'confirmed', 'completed', 'rejected', 'cancelled'].map((s) => (
+          {['all', 'pending', 'confirmed', 'completed', 'rejected', 'cancelled', 'expired'].map((s) => (
             <button key={s} className={`chip ${filter === s ? 'on' : ''}`} onClick={() => setSp(s === 'all' ? {} : { status: s }, { replace: true })} style={{ textTransform: 'capitalize' }}>{s} ({count(s)})</button>
           ))}
         </div>
@@ -29,7 +29,7 @@ export default function OwnerBookings() {
             <tr key={b._id}>
               <td>{b.customer?.name}<div className="muted small">{b.customer?.mobile}</div></td>
               <td>{b.vehicle?.name}<div className="muted small">{b.vehicle?.vehicleNumber}</div></td>
-              <td>{fmtDate(b.startDate)} to {fmtDate(b.endDate)} ({b.days}d)</td><td>{money(b.totalAmount)}</td>
+              <td>{fmtDate(b.startDate)} to {fmtDate(b.endDate)} ({b.days}d){b.extendedDays > 0 && <div className="small" style={{ color: 'var(--ok)', fontWeight: 600 }}>Extended +{b.extendedDays}d (was till {fmtDate(b.originalEndDate)})</div>}</td><td>{money(b.totalAmount)}</td>
               <td className="wrap">{b.customerNote || '-'}</td><td><Badge s={b.status} /></td>
               <td className="row">
                 {b.status === 'pending' && <><button className="btn primary sm" onClick={() => set(b._id, { status: 'confirmed' })}>Approve</button>

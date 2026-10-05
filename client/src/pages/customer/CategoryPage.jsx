@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, askLocation, getLoc, setLoc } from '../../services/api';
 import { money, Msg, Empty, Page, MapButton } from '../../components/ui';
 import { CATEGORY_INFO, CategoryArt } from '../../components/VehicleImage';
+import '../../home-extras.css';
 
 export default function CategoryPage() {
   const { category } = useParams();
@@ -19,10 +20,7 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
   const [shop, setShop] = useState('');
 
-  // ask for location once when the page opens, so nearby shops show first
-  useEffect(() => {
-    if (!getLoc()) askLocation().then((l) => { setLoc(l); setLocState(l); }).catch((e) => setLocMsg(e.message + '. Showing vehicles from all rental shops.'));
-  }, []);
+  // location is asked once on the dashboard after login; here we only reuse it (the Find near me button is still available)
 
   useEffect(() => {
     if (!info) return;
@@ -50,8 +48,7 @@ export default function CategoryPage() {
   // switching category replaces this history entry, so the Back arrow goes straight to the dashboard
   const switchCat = (k) => {
     if (k === category) return;
-    if (k !== 'all') return nav(`/category/${k}`, { replace: true });
-    window.history.state?.idx > 0 ? nav(-1) : nav('/home', { replace: true });
+    nav(`/category/${k}`, { replace: true });
   };
 
   return (
@@ -62,19 +59,19 @@ export default function CategoryPage() {
         ))}
       </div>
 
-      <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
-        <form className="row" style={{ flex: 1, minWidth: 220, flexWrap: 'nowrap' }} onSubmit={(e) => { e.preventDefault(); setQ(text.trim()); }}>
-          <input style={{ flex: 1 }} placeholder={`Search ${info.title.toLowerCase()}, shop, city or state`} value={text} onChange={(e) => setText(e.target.value)} />
+      <div className="cbar">
+        <form className="cbar-search" onSubmit={(e) => { e.preventDefault(); setQ(text.trim()); }}>
+          <input placeholder={`Search ${info.title.toLowerCase()}, shop, city or state`} value={text} onChange={(e) => setText(e.target.value)} />
           <button type="submit" className="btn dark">Search</button>
           {q && <button type="button" className="btn ghost" onClick={() => { setText(''); setQ(''); }}>Clear</button>}
         </form>
-        <div className="row">
+        <div className="cbar-ctrl">
           {loc && <select value={radius} onChange={(e) => setRadius(e.target.value)} aria-label="Radius">{[5, 10, 25, 50, 100].map((r) => <option key={r} value={r}>Within {r} km</option>)}</select>}
           <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
             <option value="nearest">Nearest</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option>
             <option value="name">Vehicle name</option><option value="shop">Shop name</option>
           </select>
-          {loc ? <button className="btn light" onClick={clearLoc}>Clear location</button> : <button className="btn primary" onClick={useLoc}>Find near me</button>}
+          {loc ? <button type="button" className="btn light" onClick={clearLoc}>Clear location</button> : <button type="button" className="btn primary" onClick={useLoc}>Find near me</button>}
         </div>
       </div>
 

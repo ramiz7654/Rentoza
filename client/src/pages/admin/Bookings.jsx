@@ -11,7 +11,7 @@ export default function AdminBookings() {
   return (
     <Page title="Bookings" sub="Monitoring only. Owners approve or reject individual bookings.">
       <Msg>{err}</Msg>
-      <FilterChips options={['all', 'pending', 'confirmed', 'completed', 'rejected', 'cancelled']} value={filter} counts={(s) => (s === 'all' ? all : all.filter((b) => b.status === s)).length}
+      <FilterChips options={['all', 'pending', 'confirmed', 'completed', 'rejected', 'cancelled', 'expired']} value={filter} counts={(s) => (s === 'all' ? all : all.filter((b) => b.status === s)).length}
         onPick={(s) => setSp(s === 'all' ? {} : { status: s }, { replace: true })} />
       {data && !list.length && <Empty>No bookings in this view.</Empty>}
       <div className="table-wrap" style={{ display: list.length ? 'block' : 'none' }}><table>

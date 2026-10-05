@@ -4,6 +4,7 @@ const Rental = require('../models/Rental');
 const Vehicle = require('../models/Vehicle');
 const Booking = require('../models/Booking');
 const Review = require('../models/Review');
+const { settleMiddleware } = require('../utils/settle');
 const { protect, requireRole } = require('../middleware/auth');
 const { h, bad, validLoc, CATEGORIES } = require('../utils/helpers');
 
@@ -25,7 +26,7 @@ router.post('/register', h(async (req, res) => {
   res.status(201).json({ message: 'Registration submitted successfully. Please wait for admin approval.' });
 }));
 
-router.use(protect, requireRole('owner'));
+router.use(protect, requireRole('owner'), settleMiddleware);
 const myRental = async (user) => (await Rental.findOne({ owner: user._id })) || bad('Rental profile not found', 404);
 
 router.get('/dashboard', h(async (req, res) => {
